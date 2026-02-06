@@ -3,10 +3,9 @@ const Database = require('better-sqlite3');
 
 const app = express();
 app.use(express.json());
+app.use(express.static('public'));
 
-// Create (or open) the database file
 const db = new Database('todos.db');
-
 // Create the table if it doesn't exist yet
 db.exec(`
   CREATE TABLE IF NOT EXISTS todos (
@@ -58,9 +57,6 @@ app.delete('/api/todos/:id', (req, res) => {
 
     db.prepare('DELETE FROM todos WHERE id = ?').run(req.params.id);
     res.status(204).send();
-});
-app.get('/', (req, res) => {
-    res.json({ message: 'Welcome to my Todo API! Go to /api/todos to see todos.' });
 });
 app.listen(3000, () => {
     console.log('API running at http://localhost:3000');
