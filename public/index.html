@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Todo App</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -29,15 +32,22 @@
 
         h1 {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
             font-size: 2rem;
             color: #e94560;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.85rem;
         }
 
         .add-form {
             display: flex;
             gap: 10px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         .add-form input {
@@ -69,8 +79,26 @@
             background: #c73651;
         }
 
-        .todo-list {
-            list-style: none;
+        .filters {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .filter-btn {
+            padding: 6px 16px;
+            background: #16213e;
+            color: #aaa;
+            border: 2px solid #333;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .filter-btn.active {
+            border-color: #e94560;
+            color: #e94560;
         }
 
         .todo-item {
@@ -118,79 +146,130 @@
             color: #666;
             padding: 40px;
         }
+
+        .count {
+            text-align: center;
+            color: #666;
+            margin-top: 20px;
+            font-size: 0.85rem;
+        }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <h1>My Todos</h1>
+    <div id="root"></div>
 
-        <div class="add-form">
-            <input type="text" id="taskInput" placeholder="What needs to be done?">
-            <button onclick="addTodo()">Add</button>
-        </div>
-
-        <ul class="todo-list" id="todoList"></ul>
-    </div>
-
-    <script>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
         const API = '/api/todos';
 
-        // Load todos when page opens
-        loadTodos();
+        function App() {
+            const [todos, setTodos] = useState([]);
+            const [task, setTask] = useState('');
+            const [filter, setFilter] = useState('all');
 
-        // Also allow pressing Enter to add
-        document.getElementById('taskInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addTodo();
-        });
+            // Load todos on first render
+            useEffect(() => {
+                loadTodos();
+            }, []);
 
-        async function loadTodos() {
-            const res = await fetch(API);
-            const todos = await res.json();
-            const list = document.getElementById('todoList');
-
-            if (todos.length === 0) {
-                list.innerHTML = '<li class="empty">No todos yet. Add one above!</li>';
-                return;
+            async function loadTodos() {
+                const res = await fetch(API);
+                const data = await res.json();
+                setTodos(data);
             }
 
-            list.innerHTML = todos.map(todo => `
-        <li class="todo-item ${todo.done ? 'done' : ''}">
-          <input type="checkbox" ${todo.done ? 'checked' : ''} onchange="toggleTodo(${todo.id}, this.checked)">
-          <span class="todo-text">${todo.task}</span>
-          <button class="delete-btn" onclick="deleteTodo(${todo.id})">✕</button>
-        </li>
-      `).join('');
-        }
+            async function addTodo(e) {
+                e.preventDefault();
+                if (!task.trim()) return;
 
-        async function addTodo() {
-            const input = document.getElementById('taskInput');
-            const task = input.value.trim();
-            if (!task) return;
+                await fetch(API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ task })
+                });
 
-            await fetch(API, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ task })
+                setTask('');
+                loadTodos();
+            }
+
+            async function toggleTodo(id, done) {
+                await fetch(`${API}/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ done })
+                });
+                loadTodos();
+            }
+
+            async function deleteTodo(id) {
+                await fetch(`${API}/${id}`, { method: 'DELETE' });
+                loadTodos();
+            }
+
+            // Filter todos based on selected filter
+            const filtered = todos.filter(todo => {
+                if (filter === 'active') return !todo.done;
+                if (filter === 'done') return todo.done;
+                return true;
             });
 
-            input.value = '';
-            loadTodos();
+            const remaining = todos.filter(t => !t.done).length;
+
+            return (
+                <div className="container">
+                    <h1>My Todos</h1>
+                    <p className="subtitle">Built with React + Express + SQLite</p>
+
+                    <div className="add-form">
+                        <input
+                            type="text"
+                            value={task}
+                            onChange={(e) => setTask(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && addTodo(e)}
+                            placeholder="What needs to be done?"
+                        />
+                        <button onClick={addTodo}>Add</button>
+                    </div>
+
+                    <div className="filters">
+                        {['all', 'active', 'done'].map(f => (
+                            <button
+                                key={f}
+                                className={`filter-btn ${filter === f ? 'active' : ''}`}
+                                onClick={() => setFilter(f)}
+                            >
+                                {f.charAt(0).toUpperCase() + f.slice(1)}
+                            </button>
+                        ))}
+                    </div>
+
+                    {filtered.length === 0 ? (
+                        <p className="empty">
+                            {filter === 'all' ? 'No todos yet. Add one above!' : `No ${filter} todos.`}
+                        </p>
+                    ) : (
+                        filtered.map(todo => (
+                            <div key={todo.id} className={`todo-item ${todo.done ? 'done' : ''}`}>
+                                <input
+                                    type="checkbox"
+                                    checked={!!todo.done}
+                                    onChange={(e) => toggleTodo(todo.id, e.target.checked)}
+                                />
+                                <span className="todo-text">{todo.task}</span>
+                                <button className="delete-btn" onClick={() => deleteTodo(todo.id)}>✕</button>
+                            </div>
+                        ))
+                    )}
+
+                    {todos.length > 0 && (
+                        <p className="count">{remaining} task{remaining !== 1 ? 's' : ''} remaining</p>
+                    )}
+                </div>
+            );
         }
 
-        async function toggleTodo(id, done) {
-            await fetch(`${API}/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ done })
-            });
-            loadTodos();
-        }
-
-        async function deleteTodo(id) {
-            await fetch(`${API}/${id}`, { method: 'DELETE' });
-            loadTodos();
-        }
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
 
