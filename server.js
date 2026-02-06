@@ -59,7 +59,9 @@ app.delete('/api/todos/:id', (req, res) => {
     db.prepare('DELETE FROM todos WHERE id = ?').run(req.params.id);
     res.status(204).send();
 });
-
+app.get('/', (req, res) => {
+    res.json({ message: 'Welcome to my Todo API! Go to /api/todos to see todos.' });
+});
 app.listen(3000, () => {
     console.log('API running at http://localhost:3000');
 });
