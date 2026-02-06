@@ -1,276 +1,386 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Todo App</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Todo App</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #1a1a2e;
-            color: #eee;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            padding: 40px 20px;
-        }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+      transition: background 0.3s, color 0.3s;
+    }
 
-        .container {
-            width: 100%;
-            max-width: 500px;
-        }
+    /* Dark theme (default) */
+    body.dark {
+      background: #1a1a2e;
+      color: #eee;
+    }
 
-        h1 {
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 2rem;
-            color: #e94560;
-        }
+    body.dark .input-field {
+      border: 2px solid #333;
+      background: #16213e;
+      color: #eee;
+    }
 
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 0.85rem;
-        }
+    body.dark .todo-item { background: #16213e; }
+    body.dark .filter-btn { background: #16213e; border-color: #333; color: #aaa; }
+    body.dark .category-select { background: #16213e; color: #eee; border-color: #333; }
 
-        .add-form {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+    /* Light theme */
+    body.light {
+      background: #f5f5f5;
+      color: #222;
+    }
 
-        .add-form input {
-            flex: 1;
-            padding: 12px 16px;
-            border: 2px solid #333;
-            border-radius: 8px;
-            background: #16213e;
-            color: #eee;
-            font-size: 1rem;
-            outline: none;
-        }
+    body.light .input-field {
+      border: 2px solid #ddd;
+      background: #fff;
+      color: #222;
+    }
 
-        .add-form input:focus {
-            border-color: #e94560;
-        }
+    body.light .todo-item { background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    body.light .filter-btn { background: #fff; border-color: #ddd; color: #666; }
+    body.light .category-select { background: #fff; color: #222; border-color: #ddd; }
+    body.light .empty { color: #999; }
+    body.light .count { color: #999; }
+    body.light .subtitle { color: #999; }
 
-        .add-form button {
-            padding: 12px 20px;
-            background: #e94560;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            cursor: pointer;
-        }
+    .container { width: 100%; max-width: 500px; }
 
-        .add-form button:hover {
-            background: #c73651;
-        }
+    .header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      margin-bottom: 10px;
+    }
 
-        .filters {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-            justify-content: center;
-        }
+    h1 { font-size: 2rem; color: #e94560; }
 
-        .filter-btn {
-            padding: 6px 16px;
-            background: #16213e;
-            color: #aaa;
-            border: 2px solid #333;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.85rem;
-        }
+    .theme-toggle {
+      position: absolute;
+      right: 0;
+      background: none;
+      border: 2px solid #e94560;
+      color: #e94560;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-        .filter-btn.active {
-            border-color: #e94560;
-            color: #e94560;
-        }
+    .theme-toggle:hover { background: rgba(233, 69, 96, 0.1); }
 
-        .todo-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px 16px;
-            background: #16213e;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 0.85rem;
+    }
 
-        .todo-item.done .todo-text {
-            text-decoration: line-through;
-            opacity: 0.5;
-        }
+    .add-form { display: flex; gap: 10px; margin-bottom: 10px; }
 
-        .todo-text {
-            flex: 1;
-            font-size: 1rem;
-        }
+    .input-field {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      transition: background 0.3s, color 0.3s, border 0.3s;
+    }
 
-        .todo-item input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
+    .add-form .input-field { flex: 1; }
 
-        .delete-btn {
-            background: none;
-            border: none;
-            color: #e94560;
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 4px;
-        }
+    .input-field:focus { border-color: #e94560; }
 
-        .delete-btn:hover {
-            background: rgba(233, 69, 96, 0.2);
-        }
+    .category-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      align-items: center;
+    }
 
-        .empty {
-            text-align: center;
-            color: #666;
-            padding: 40px;
-        }
+    .category-select {
+      flex: 1;
+      padding: 10px 12px;
+      border: 2px solid #333;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s, border 0.3s;
+    }
 
-        .count {
-            text-align: center;
-            color: #666;
-            margin-top: 20px;
-            font-size: 0.85rem;
-        }
-    </style>
+    .category-select:focus { border-color: #e94560; }
+
+    .btn-primary {
+      padding: 12px 20px;
+      background: #e94560;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .btn-primary:hover { background: #c73651; }
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 6px 16px;
+      border: 2px solid #333;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      background: transparent;
+      transition: background 0.3s, color 0.3s, border 0.3s;
+    }
+
+    .filter-btn.active { border-color: #e94560; color: #e94560; }
+
+    .filter-label {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #666;
+      margin-bottom: 6px;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      transition: background 0.3s;
+    }
+
+    .todo-item.done .todo-text {
+      text-decoration: line-through;
+      opacity: 0.5;
+    }
+
+    .todo-text { flex: 1; font-size: 1rem; }
+
+    .todo-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .tag {
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .tag-personal { background: #0f3460; color: #5dade2; }
+    .tag-work { background: #462a06; color: #f0a500; }
+    .tag-health { background: #0a3d23; color: #58d68d; }
+    .tag-shopping { background: #3d0a3d; color: #c39bd3; }
+
+    body.light .tag-personal { background: #d6eaf8; color: #2471a3; }
+    body.light .tag-work { background: #fef5e7; color: #b7950b; }
+    body.light .tag-health { background: #d5f5e3; color: #1e8449; }
+    body.light .tag-shopping { background: #f4ecf7; color: #7d3c98; }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: #e94560;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    .delete-btn:hover { background: rgba(233, 69, 96, 0.2); }
+
+    .empty { text-align: center; color: #666; padding: 40px; }
+
+    .count {
+      text-align: center;
+      color: #666;
+      margin-top: 20px;
+      font-size: 0.85rem;
+    }
+  </style>
 </head>
+<body class="dark">
+  <div id="root"></div>
 
-<body>
-    <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const API = '/api/todos';
+    const CATEGORIES = ['personal', 'work', 'health', 'shopping'];
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-        const API = '/api/todos';
+    function App() {
+      const [todos, setTodos] = useState([]);
+      const [task, setTask] = useState('');
+      const [category, setCategory] = useState('personal');
+      const [filter, setFilter] = useState('all');
+      const [catFilter, setCatFilter] = useState('all');
+      const [theme, setTheme] = useState('dark');
 
-        function App() {
-            const [todos, setTodos] = useState([]);
-            const [task, setTask] = useState('');
-            const [filter, setFilter] = useState('all');
+      useEffect(() => {
+        loadTodos();
+      }, []);
 
-            // Load todos on first render
-            useEffect(() => {
-                loadTodos();
-            }, []);
+      useEffect(() => {
+        document.body.className = theme;
+      }, [theme]);
 
-            async function loadTodos() {
-                const res = await fetch(API);
-                const data = await res.json();
-                setTodos(data);
-            }
+      async function loadTodos() {
+        const res = await fetch(API);
+        const data = await res.json();
+        setTodos(data);
+      }
 
-            async function addTodo(e) {
-                e.preventDefault();
-                if (!task.trim()) return;
+      async function addTodo(e) {
+        e.preventDefault();
+        if (!task.trim()) return;
 
-                await fetch(API, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ task })
-                });
+        await fetch(API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ task, category })
+        });
 
-                setTask('');
-                loadTodos();
-            }
+        setTask('');
+        loadTodos();
+      }
 
-            async function toggleTodo(id, done) {
-                await fetch(`${API}/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ done })
-                });
-                loadTodos();
-            }
+      async function toggleTodo(id, done) {
+        await fetch(`${API}/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ done })
+        });
+        loadTodos();
+      }
 
-            async function deleteTodo(id) {
-                await fetch(`${API}/${id}`, { method: 'DELETE' });
-                loadTodos();
-            }
+      async function deleteTodo(id) {
+        await fetch(`${API}/${id}`, { method: 'DELETE' });
+        loadTodos();
+      }
 
-            // Filter todos based on selected filter
-            const filtered = todos.filter(todo => {
-                if (filter === 'active') return !todo.done;
-                if (filter === 'done') return todo.done;
-                return true;
-            });
+      const filtered = todos.filter(todo => {
+        const statusMatch =
+          filter === 'all' ? true :
+          filter === 'active' ? !todo.done :
+          !!todo.done;
 
-            const remaining = todos.filter(t => !t.done).length;
+        const catMatch = catFilter === 'all' ? true : todo.category === catFilter;
 
-            return (
-                <div className="container">
-                    <h1>My Todos</h1>
-                    <p className="subtitle">Built with React + Express + SQLite</p>
+        return statusMatch && catMatch;
+      });
 
-                    <div className="add-form">
-                        <input
-                            type="text"
-                            value={task}
-                            onChange={(e) => setTask(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && addTodo(e)}
-                            placeholder="What needs to be done?"
-                        />
-                        <button onClick={addTodo}>Add</button>
-                    </div>
+      const remaining = todos.filter(t => !t.done).length;
 
-                    <div className="filters">
-                        {['all', 'active', 'done'].map(f => (
-                            <button
-                                key={f}
-                                className={`filter-btn ${filter === f ? 'active' : ''}`}
-                                onClick={() => setFilter(f)}
-                            >
-                                {f.charAt(0).toUpperCase() + f.slice(1)}
-                            </button>
-                        ))}
-                    </div>
+      return (
+        <div className="container">
+          <div className="header">
+            <h1>My Todos</h1>
+            <button className="theme-toggle" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+              {theme === 'dark' ? '☀️' : '🌙'}
+            </button>
+          </div>
+          <p className="subtitle">Built with React + Express + SQLite</p>
 
-                    {filtered.length === 0 ? (
-                        <p className="empty">
-                            {filter === 'all' ? 'No todos yet. Add one above!' : `No ${filter} todos.`}
-                        </p>
-                    ) : (
-                        filtered.map(todo => (
-                            <div key={todo.id} className={`todo-item ${todo.done ? 'done' : ''}`}>
-                                <input
-                                    type="checkbox"
-                                    checked={!!todo.done}
-                                    onChange={(e) => toggleTodo(todo.id, e.target.checked)}
-                                />
-                                <span className="todo-text">{todo.task}</span>
-                                <button className="delete-btn" onClick={() => deleteTodo(todo.id)}>✕</button>
-                            </div>
-                        ))
-                    )}
+          <div className="add-form">
+            <input
+              className="input-field"
+              type="text"
+              value={task}
+              onChange={(e) => setTask(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addTodo(e)}
+              placeholder="What needs to be done?"
+            />
+            <button className="btn-primary" onClick={addTodo}>Add</button>
+          </div>
 
-                    {todos.length > 0 && (
-                        <p className="count">{remaining} task{remaining !== 1 ? 's' : ''} remaining</p>
-                    )}
-                </div>
-            );
-        }
+          <div className="category-row">
+            <select className="category-select" value={category} onChange={(e) => setCategory(e.target.value)}>
+              {CATEGORIES.map(c => (
+                <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
+              ))}
+            </select>
+          </div>
 
-        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-    </script>
+          <p className="filter-label">Status</p>
+          <div className="filters">
+            {['all', 'active', 'done'].map(f => (
+              <button
+                key={f}
+                className={`filter-btn ${filter === f ? 'active' : ''}`}
+                onClick={() => setFilter(f)}
+              >
+                {f.charAt(0).toUpperCase() + f.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          <p className="filter-label">Category</p>
+          <div className="filters" style={{marginBottom: 20}}>
+            {['all', ...CATEGORIES].map(c => (
+              <button
+                key={c}
+                className={`filter-btn ${catFilter === c ? 'active' : ''}`}
+                onClick={() => setCatFilter(c)}
+              >
+                {c.charAt(0).toUpperCase() + c.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          {filtered.length === 0 ? (
+            <p className="empty">No todos found.</p>
+          ) : (
+            filtered.map(todo => (
+              <div key={todo.id} className={`todo-item ${todo.done ? 'done' : ''}`}>
+                <input
+                  type="checkbox"
+                  checked={!!todo.done}
+                  onChange={(e) => toggleTodo(todo.id, e.target.checked)}
+                />
+                <span className="todo-text">{todo.task}</span>
+                <span className={`tag tag-${todo.category || 'personal'}`}>
+                  {todo.category || 'personal'}
+                </span>
+                <button className="delete-btn" onClick={() => deleteTodo(todo.id)}>✕</button>
+              </div>
+            ))
+          )}
+
+          {todos.length > 0 && (
+            <p className="count">{remaining} task{remaining !== 1 ? 's' : ''} remaining</p>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
 </body>
-
 </html>

@@ -11,10 +11,16 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS todos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     task TEXT NOT NULL,
-    done INTEGER DEFAULT 0
+    done INTEGER DEFAULT 0,
+    category TEXT DEFAULT 'personal'
   )
 `);
 
+try {
+  db.exec(`ALTER TABLE todos ADD COLUMN category TEXT DEFAULT 'personal'`);
+} catch (e) {
+  // Column already exists, that's fine
+}
 // GET all todos
 app.get('/api/todos', (req, res) => {
     const todos = db.prepare('SELECT * FROM todos').all();
@@ -30,11 +36,12 @@ app.get('/api/todos/:id', (req, res) => {
 
 // CREATE a todo
 app.post('/api/todos', (req, res) => {
-    if (!req.body.task) return res.status(400).json({ error: 'Task is required' });
+  if (!req.body.task) return res.status(400).json({ error: 'Task is required' });
 
-    const result = db.prepare('INSERT INTO todos (task) VALUES (?)').run(req.body.task);
-    const newTodo = db.prepare('SELECT * FROM todos WHERE id = ?').get(result.lastInsertRowid);
-    res.status(201).json(newTodo);
+  const category = req.body.category || 'personal';
+  const result = db.prepare('INSERT INTO todos (task, category) VALUES (?, ?)').run(req.body.task, category);
+  const newTodo = db.prepare('SELECT * FROM todos WHERE id = ?').get(result.lastInsertRowid);
+  res.status(201).json(newTodo);
 });
 
 // UPDATE a todo
